@@ -6,14 +6,13 @@ A lightweight local web app for converting PDF files to PNG, JPG, or BMP images.
 
 ## 功能 Features
 
-- 上传 PDF 并预览所有页面（缩略图 + 大图懒加载）
+- 上传 PDF 并预览页面
 - 支持 PNG、JPG、BMP 三种导出格式
 - 可配置 DPI、JPG 质量、BMP 位深
 - 支持页码范围选择（如 `1,3,5-8`）
-- 自定义文件命名模板，实时预览文件名
+- 自定义文件命名模板
 - 按 PDF 分组合并导出为 ZIP
-- 多语言界面：简体中文、繁體中文、English
-- 大文件优化：预览懒加载 + 批量预渲染
+- 多语言支持：简体中文、繁體中文、English
 - 工具状态检查，支持一键安装 Poppler
 
 ## 环境要求 Requirements
