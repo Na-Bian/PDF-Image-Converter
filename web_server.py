@@ -17,7 +17,7 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from converter_core import (
+from converter import (
     ExportOptions,
     PdfItem,
     export_pdfs,

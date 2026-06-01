@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from converter_core import avoid_overwrite, build_filename, parse_page_ranges, safe_filename
+from converter import avoid_overwrite, build_filename, parse_page_ranges, safe_filename
 
 
 class CoreTests(unittest.TestCase):
