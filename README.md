@@ -1,92 +1,102 @@
-# PDF Image Converter / PDF 转图片
+# PDF Image Converter
 
-A lightweight web app for converting one or more PDF files to PNG, JPG, or BMP images.
+一个轻量级本地 Web 工具，用于将单个或多个 PDF 转换为 PNG、JPG 或 BMP 图片。
 
-一个轻量级 Web 工具，用于将单个或多个 PDF 转换为 PNG、JPG 或 BMP 图片。
+A lightweight local web app for converting PDF files to PNG, JPG, or BMP images.
 
-## Features / 功能
+## 功能 Features
 
-- Scan a folder for PDF files. / 扫描文件夹中的 PDF。
-- Select which PDFs to export. / 勾选要导出的 PDF。
-- Preview PDF pages with thumbnails. / 缩略图和大图预览。
-- Export specific pages by range expression or thumbnail checks. / 支持页码范围和缩略图勾选。
-- Export PNG, JPG, and BMP. / 支持 PNG、JPG、BMP。
-- Adjust JPG quality. / 可调 JPG 压缩质量。
-- Choose BMP bit depth: 1-bit, 8-bit grayscale, 24-bit RGB, 32-bit RGBA. / 可选 BMP 位深。
-- Export each PDF to its own folder or merge all pages into one folder. / 支持分别导出或合并导出。
-- Configure file name templates with `{pdf_stem}`, `{pdf_index}`, `{page}`, `{global}`. / 支持命名模板。
-- Switch UI language between Chinese and English. / 支持中文和英文界面切换。
+- 上传 PDF 并预览所有页面（缩略图 + 大图懒加载）
+- 支持 PNG、JPG、BMP 三种导出格式
+- 可配置 DPI、JPG 质量、BMP 位深
+- 支持页码范围选择（如 `1,3,5-8`）
+- 自定义文件命名模板，实时预览文件名
+- 按 PDF 分组合并导出为 ZIP
+- 多语言界面：简体中文、繁體中文、English
+- 大文件优化：预览懒加载 + 批量预渲染
+- 工具状态检查，支持一键安装 Poppler
 
-## Requirements / 依赖
+## 环境要求 Requirements
 
-- macOS
-- Python 3
-- Poppler command-line tools: `pdfinfo` and `pdftoppm`
-- Python packages in `requirements.txt`
+- **Python 3.9+**
+- **Poppler** 命令行工具（`pdfinfo` 和 `pdftoppm`）
+- Python 依赖见 `requirements.txt`
 
-Install Python dependencies:
+支持 **macOS**、**Windows**、**Linux**。
 
-```bash
-python3 -m pip install -r requirements.txt
-```
+### 安装 Poppler
 
-If Poppler is missing, install it with Homebrew:
+**macOS**（Homebrew）：
 
 ```bash
 brew install poppler
 ```
 
-## Run Web App / 运行 Web 应用
-
-Local-only:
+**Windows**（winget）：
 
 ```bash
-cd /Users/nabian/Documents/数字电路与逻辑设计/pdf_image_converter_app
+winget install --id oschwartz10612.Poppler -e
+```
+
+**Windows**（Chocolatey）：
+
+```bash
+choco install poppler -y
+```
+
+**Linux**（Debian / Ubuntu）：
+
+```bash
+sudo apt install poppler-utils
+```
+
+### 安装 Python 依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+## 运行 Web 应用 Run Web App
+
+```bash
 python3 web_server.py
 ```
 
-Then open:
+然后打开：
 
 ```text
 http://127.0.0.1:8765
 ```
 
-Same-network multi-device access:
+局域网多设备访问：
 
 ```bash
-cd /Users/nabian/Documents/数字电路与逻辑设计/pdf_image_converter_app
 python3 web_server.py --host 0.0.0.0 --port 8765
 ```
 
-Then open `http://<your-mac-lan-ip>:8765` from another device on the same network.
-
-## Run Desktop Prototype / 运行桌面原型
+## 运行桌面原型 Run Desktop App
 
 ```bash
-cd /Users/nabian/Documents/数字电路与逻辑设计/pdf_image_converter_app
 python3 app.py
 ```
 
-## Build macOS App / 打包为 .app
+## 打包 macOS 应用 Build macOS App
 
 ```bash
-cd /Users/nabian/Documents/数字电路与逻辑设计/pdf_image_converter_app
 ./build_app.sh
 ```
 
-The app will be created at:
+生成路径：`dist/PDFImageConverter.app`
 
-```text
-dist/PDFImageConverter.app
-```
+## 默认设置 Default Settings
 
-## Default Settings / 默认设置
+| 项目 | 默认值 |
+|------|--------|
+| DPI | 300 |
+| 格式 | PNG |
+| JPG 质量 | 90 |
+| BMP 位深 | 24-bit RGB |
+| 导出模式 | 按 PDF 分组 |
+| 命名模板 | `{page}` |
 
-- DPI: `300`
-- Format: `PNG`
-- JPG quality: `90`
-- BMP depth: `24-bit RGB`
-- Export mode: separate folders
-- Filename template: `{page}`
-
-Existing files are never overwritten. The app appends `_2`, `_3`, and so on when needed.
+导出时不会覆盖已有文件，同名文件自动追加 `_2`、`_3` 等后缀。
