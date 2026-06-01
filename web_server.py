@@ -42,10 +42,10 @@ def preview_dpi(pages: int) -> int:
     if pages <= 20:
         return 150
     if pages <= 100:
-        return 120
+        return 130
     if pages <= 300:
-        return 100
-    return 80
+        return 115
+    return 100
 
 
 def json_bytes(payload: object) -> bytes:
