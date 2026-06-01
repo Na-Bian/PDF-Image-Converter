@@ -40,12 +40,12 @@ INSTALL_LOCK = threading.Lock()
 def preview_dpi(pages: int) -> int:
     """动态预览精度：小文件给高画质，大文件优先速度。"""
     if pages <= 20:
-        return 180
+        return 200
     if pages <= 100:
-        return 150
+        return 180
     if pages <= 300:
-        return 130
-    return 110
+        return 165
+    return 150
 
 
 def json_bytes(payload: object) -> bytes:
