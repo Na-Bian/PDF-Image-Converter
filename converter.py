@@ -204,13 +204,13 @@ def render_pdf_page(pdf_path: Path, page: int, output_prefix: Path, dpi: int = 3
     return png_path
 
 
-def render_pdf_page_preview(pdf_path: Path, page: int, output_prefix: Path, dpi: int = 72) -> Path:
+def render_pdf_page_preview(pdf_path: Path, page: int, output_prefix: Path, dpi: int = 72, quality: int = 90) -> Path:
     """Render a single page to JPEG using pdftoppm -jpeg (faster and smaller than PNG)."""
     result = subprocess.run(
         [
             tool_path("pdftoppm"),
             "-jpeg",
-            "-quality", "95",
+            "-quality", str(quality),
             "-r",
             str(dpi),
             "-f",

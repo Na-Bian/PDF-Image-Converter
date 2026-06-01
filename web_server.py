@@ -48,6 +48,17 @@ def preview_dpi(pages: int) -> int:
     return 150
 
 
+def preview_quality(pages: int) -> int:
+    """动态JPEG质量：与DPI策略一致。"""
+    if pages <= 20:
+        return 95
+    if pages <= 100:
+        return 90
+    if pages <= 300:
+        return 85
+    return 80
+
+
 def json_bytes(payload: object) -> bytes:
     return json.dumps(payload, ensure_ascii=False).encode("utf-8")
 
@@ -311,13 +322,15 @@ class WebHandler(BaseHTTPRequestHandler):
                 data = png.read_bytes()
                 content_type = "image/png"
             else:
-                # Main preview: dynamic DPI based on page count
-                dpi = preview_dpi(int(pdf["pages"]))
-                prefix = temp_dir / f"{file_id}_{page}_{kind}_{dpi}"
+                # Main preview: dynamic DPI and quality based on page count
+                pages_total = int(pdf["pages"])
+                dpi = preview_dpi(pages_total)
+                quality = preview_quality(pages_total)
+                prefix = temp_dir / f"{file_id}_{page}_{kind}_{dpi}q{quality}"
                 cached = prefix.with_suffix(".jpg")
                 if not cached.exists():
                     with RENDER_SEMAPHORE:
-                        cached = render_pdf_page_preview(Path(pdf["path"]), page, prefix, dpi=dpi)
+                        cached = render_pdf_page_preview(Path(pdf["path"]), page, prefix, dpi=dpi, quality=quality)
                 data = cached.read_bytes()
                 content_type = "image/jpeg"
 
@@ -350,10 +363,12 @@ class WebHandler(BaseHTTPRequestHandler):
 
             if kind == "thumb":
                 dpi = 34
+                quality = 95
                 suffix = ".png"
                 render_fn = render_pdf_page
             else:
                 dpi = preview_dpi(total)
+                quality = preview_quality(total)
                 suffix = ".jpg"
                 render_fn = render_pdf_page_preview
 
@@ -363,7 +378,7 @@ class WebHandler(BaseHTTPRequestHandler):
                 if kind == "thumb":
                     prefix = temp_dir / f"{file_id}_{p}_{kind}"
                 else:
-                    prefix = temp_dir / f"{file_id}_{p}_{kind}_{dpi}"
+                    prefix = temp_dir / f"{file_id}_{p}_{kind}_{dpi}q{quality}"
                 if not prefix.with_suffix(suffix).exists():
                     uncached.append(p)
 
@@ -371,10 +386,12 @@ class WebHandler(BaseHTTPRequestHandler):
                 def render_one(p: int) -> None:
                     if kind == "thumb":
                         pre = temp_dir / f"{file_id}_{p}_{kind}"
+                        with RENDER_SEMAPHORE:
+                            render_fn(Path(pdf["path"]), p, pre, dpi=dpi)
                     else:
-                        pre = temp_dir / f"{file_id}_{p}_{kind}_{dpi}"
-                    with RENDER_SEMAPHORE:
-                        render_fn(Path(pdf["path"]), p, pre, dpi=dpi)
+                        pre = temp_dir / f"{file_id}_{p}_{kind}_{dpi}q{quality}"
+                        with RENDER_SEMAPHORE:
+                            render_fn(Path(pdf["path"]), p, pre, dpi=dpi, quality=quality)
 
                 workers = min(len(uncached), os.cpu_count() or 4, 8)
                 with ThreadPoolExecutor(max_workers=workers) as executor:
