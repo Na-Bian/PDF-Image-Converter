@@ -2,9 +2,7 @@
 
 一个轻量级本地 Web 工具，用于将单个或多个 PDF 转换为 PNG、JPG 或 BMP 图片。
 
-A lightweight local web app for converting PDF files to PNG, JPG, or BMP images.
-
-## 功能 Features
+## 功能
 
 - 上传 PDF 并预览页面
 - 支持 PNG、JPG、BMP 三种导出格式
@@ -15,7 +13,7 @@ A lightweight local web app for converting PDF files to PNG, JPG, or BMP images.
 - 多语言支持：简体中文、繁體中文、English
 - 工具状态检查，支持一键安装 Poppler
 
-## 环境要求 Requirements
+## 环境要求
 
 - **Python 3.9+**
 - **Poppler** 命令行工具（`pdfinfo` 和 `pdftoppm`）
@@ -55,7 +53,7 @@ sudo apt install poppler-utils
 pip install -r requirements.txt
 ```
 
-## 运行 Run
+## 运行
 
 ```bash
 python web_server.py
@@ -69,7 +67,7 @@ python web_server.py
 python web_server.py --host 0.0.0.0 --port 8765
 ```
 
-## 默认设置 Default Settings
+## 默认设置
 
 | 项目 | 默认值 |
 |------|--------|
@@ -79,5 +77,3 @@ python web_server.py --host 0.0.0.0 --port 8765
 | BMP 位深 | 24-bit RGB |
 | 导出模式 | 按 PDF 分组 |
 | 命名模板 | `{page}` |
-
-导出时不会覆盖已有文件，同名文件自动追加 `_2`、`_3` 等后缀。
