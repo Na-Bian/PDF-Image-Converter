@@ -210,7 +210,7 @@ def render_pdf_page_preview(pdf_path: Path, page: int, output_prefix: Path, dpi:
         [
             tool_path("pdftoppm"),
             "-jpeg",
-            "-quality", str(quality),
+            "-jpegopt", f"quality={quality}",
             "-r",
             str(dpi),
             "-f",
