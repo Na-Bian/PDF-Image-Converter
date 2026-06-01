@@ -56,37 +56,19 @@ sudo apt install poppler-utils
 pip install -r requirements.txt
 ```
 
-## 运行 Web 应用 Run Web App
+## 运行 Run
 
 ```bash
 python3 web_server.py
 ```
 
-然后打开：
-
-```text
-http://127.0.0.1:8765
-```
+然后打开 http://127.0.0.1:8765
 
 局域网多设备访问：
 
 ```bash
 python3 web_server.py --host 0.0.0.0 --port 8765
 ```
-
-## 运行桌面原型 Run Desktop App
-
-```bash
-python3 app.py
-```
-
-## 打包 macOS 应用 Build macOS App
-
-```bash
-./build_app.sh
-```
-
-生成路径：`dist/PDFImageConverter.app`
 
 ## 默认设置 Default Settings
 
