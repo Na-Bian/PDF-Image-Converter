@@ -37,6 +37,17 @@ RENDER_SEMAPHORE = threading.Semaphore(min(os.cpu_count() or 4, 8))
 INSTALL_LOCK = threading.Lock()
 
 
+def preview_dpi(pages: int) -> int:
+    """动态预览精度：小文件给高画质，大文件优先速度。"""
+    if pages <= 20:
+        return 110
+    if pages <= 100:
+        return 90
+    if pages <= 300:
+        return 72
+    return 56
+
+
 def json_bytes(payload: object) -> bytes:
     return json.dumps(payload, ensure_ascii=False).encode("utf-8")
 
@@ -300,8 +311,8 @@ class WebHandler(BaseHTTPRequestHandler):
                 data = png.read_bytes()
                 content_type = "image/png"
             else:
-                # Main preview: JPEG at 72 DPI (faster render, smaller file)
-                dpi = 72
+                # Main preview: dynamic DPI based on page count
+                dpi = preview_dpi(int(pdf["pages"]))
                 cached = prefix.with_suffix(".jpg")
                 if not cached.exists():
                     with RENDER_SEMAPHORE:
@@ -341,7 +352,7 @@ class WebHandler(BaseHTTPRequestHandler):
                 suffix = ".png"
                 render_fn = render_pdf_page
             else:
-                dpi = 72
+                dpi = preview_dpi(total)
                 suffix = ".jpg"
                 render_fn = render_pdf_page_preview
 
