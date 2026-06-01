@@ -299,11 +299,11 @@ class WebHandler(BaseHTTPRequestHandler):
             pdf = self.find_file(session, file_id)
             temp_dir = Path(session["dir"]) / "previews"
             temp_dir.mkdir(exist_ok=True)
-            prefix = temp_dir / f"{file_id}_{page}_{kind}"
 
             if kind == "thumb":
                 # Thumbnails: PNG at 34 DPI (small, need quality)
                 dpi = 34
+                prefix = temp_dir / f"{file_id}_{page}_{kind}"
                 png = prefix.with_suffix(".png")
                 if not png.exists():
                     with RENDER_SEMAPHORE:
@@ -313,6 +313,7 @@ class WebHandler(BaseHTTPRequestHandler):
             else:
                 # Main preview: dynamic DPI based on page count
                 dpi = preview_dpi(int(pdf["pages"]))
+                prefix = temp_dir / f"{file_id}_{page}_{kind}_{dpi}"
                 cached = prefix.with_suffix(".jpg")
                 if not cached.exists():
                     with RENDER_SEMAPHORE:
@@ -359,15 +360,21 @@ class WebHandler(BaseHTTPRequestHandler):
             # Filter to pages that are not yet cached.
             uncached = []
             for p in pages:
-                prefix = temp_dir / f"{file_id}_{p}_{kind}"
+                if kind == "thumb":
+                    prefix = temp_dir / f"{file_id}_{p}_{kind}"
+                else:
+                    prefix = temp_dir / f"{file_id}_{p}_{kind}_{dpi}"
                 if not prefix.with_suffix(suffix).exists():
                     uncached.append(p)
 
             if uncached:
                 def render_one(p: int) -> None:
-                    prefix = temp_dir / f"{file_id}_{p}_{kind}"
+                    if kind == "thumb":
+                        pre = temp_dir / f"{file_id}_{p}_{kind}"
+                    else:
+                        pre = temp_dir / f"{file_id}_{p}_{kind}_{dpi}"
                     with RENDER_SEMAPHORE:
-                        render_fn(Path(pdf["path"]), p, prefix, dpi=dpi)
+                        render_fn(Path(pdf["path"]), p, pre, dpi=dpi)
 
                 workers = min(len(uncached), os.cpu_count() or 4, 8)
                 with ThreadPoolExecutor(max_workers=workers) as executor:
