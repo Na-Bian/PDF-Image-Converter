@@ -19,7 +19,7 @@ A lightweight local web app for converting PDF files to PNG, JPG, or BMP images.
 
 - **Python 3.9+**
 - **Poppler** 命令行工具（`pdfinfo` 和 `pdftoppm`）
-- Python 依赖见 `requirements.txt`
+- **Pillow 12.0.0+**
 
 支持 **macOS**、**Windows**、**Linux**。
 
