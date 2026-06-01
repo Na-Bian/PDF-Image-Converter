@@ -21,15 +21,9 @@ A lightweight local web app for converting PDF files to PNG, JPG, or BMP images.
 - **Poppler** 命令行工具（`pdfinfo` 和 `pdftoppm`）
 - **Pillow 12.0.0+**
 
-支持 **macOS**、**Windows**、**Linux**。
+支持 **Windows**、**macOS**、**Linux**。
 
 ### 安装 Poppler
-
-**macOS**（Homebrew）：
-
-```bash
-brew install poppler
-```
 
 **Windows**（winget）：
 
@@ -41,6 +35,12 @@ winget install --id oschwartz10612.Poppler -e
 
 ```bash
 choco install poppler -y
+```
+
+**macOS**（Homebrew）：
+
+```bash
+brew install poppler
 ```
 
 **Linux**（Debian / Ubuntu）：
