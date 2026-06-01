@@ -59,7 +59,7 @@ pip install -r requirements.txt
 ## 运行 Run
 
 ```bash
-python3 web_server.py
+python web_server.py
 ```
 
 然后打开 http://127.0.0.1:8765
@@ -67,7 +67,7 @@ python3 web_server.py
 局域网多设备访问：
 
 ```bash
-python3 web_server.py --host 0.0.0.0 --port 8765
+python web_server.py --host 0.0.0.0 --port 8765
 ```
 
 ## 默认设置 Default Settings
