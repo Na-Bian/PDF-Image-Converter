@@ -131,6 +131,8 @@ def get_pdf_page_count(pdf_path: Path) -> int:
         [tool_path("pdfinfo"), str(pdf_path)],
         check=False,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
@@ -193,6 +195,8 @@ def render_pdf_page(pdf_path: Path, page: int, output_prefix: Path, dpi: int = 3
         ],
         check=False,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
@@ -223,6 +227,8 @@ def render_pdf_page_preview(pdf_path: Path, page: int, output_prefix: Path, dpi:
         ],
         check=False,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
