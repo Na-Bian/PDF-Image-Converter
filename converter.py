@@ -1,16 +1,22 @@
 from __future__ import annotations
 
 import os
+import platform
 import re
 import shutil
 import subprocess
 import tempfile
+import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Iterable
 
 from PIL import Image
+
+
+_fontconfig_configured = False
+_fontconfig_env: dict[str, str] = {}
 
 
 SUPPORTED_FORMATS = ("PNG", "JPG", "BMP")
@@ -24,11 +30,130 @@ TOOL_SEARCH_DIRS = (
 
 # Windows: add common Poppler install locations
 if platform.system() == "Windows":
-    _local = Path(os.environ.get("LOCALAPPDATA", "")) / "Poppler"
-    _prog = Path(os.environ.get("PROGRAMFILES", "")) / "Poppler"
-    for _d in [_local, _prog]:
-        if _d.is_dir():
-            TOOL_SEARCH_DIRS = (*TOOL_SEARCH_DIRS, str(_d / "Library" / "bin"))
+    _local = Path(os.environ.get("LOCALAPPDATA", ""))
+    _prog = Path(os.environ.get("PROGRAMFILES", ""))
+    _program_data = Path(os.environ.get("PROGRAMDATA", r"C:\ProgramData"))
+    _windows_poppler_dirs: list[str] = []
+    for _d in (_local / "Poppler", _prog / "Poppler"):
+        _windows_poppler_dirs.append(str(_d / "Library" / "bin"))
+
+    _winget_packages = _local / "Microsoft" / "WinGet" / "Packages"
+    try:
+        if _winget_packages.is_dir():
+            for _d in _winget_packages.glob("oschwartz10612.Poppler*"):
+                _windows_poppler_dirs.extend(str(_bin) for _bin in _d.glob("**/Library/bin"))
+    except OSError:
+        pass
+
+    _windows_poppler_dirs.extend(
+        [
+            str(_program_data / "chocolatey" / "bin"),
+            str(_program_data / "chocolatey" / "lib" / "poppler" / "tools"),
+            str(_program_data / "chocolatey" / "lib" / "poppler" / "tools" / "Library" / "bin"),
+        ]
+    )
+    TOOL_SEARCH_DIRS = (*_windows_poppler_dirs, *TOOL_SEARCH_DIRS)
+
+
+def _configure_fontconfig_windows(poppler_tool: str | None = None) -> None:
+    """Generate a fontconfig file that includes CJK font dirs on Windows."""
+    global _fontconfig_configured, _fontconfig_env
+    if _fontconfig_configured:
+        return
+    _fontconfig_configured = True
+
+    if platform.system() != "Windows":
+        return
+    if os.environ.get("FONTCONFIG_PATH"):
+        return
+
+    font_dirs = []
+    win_fonts = Path(os.environ.get("WINDIR", r"C:\Windows")) / "Fonts"
+    if win_fonts.is_dir():
+        font_dirs.append(str(win_fonts))
+    local_fonts = Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft" / "Windows" / "Fonts"
+    if local_fonts.is_dir():
+        font_dirs.append(str(local_fonts))
+
+    if not font_dirs:
+        return
+
+    fontconfig_dir = Path(tempfile.gettempdir()) / "pdf_image_converter_fontconfig"
+    fontconfig_dir.mkdir(parents=True, exist_ok=True)
+    fonts_conf = fontconfig_dir / "fonts.conf"
+
+    root = ET.Element("fontconfig")
+
+    cache_dir = fontconfig_dir / "cache"
+    cache_dir.mkdir(exist_ok=True)
+    cache_elem = ET.SubElement(root, "cachedir")
+    cache_elem.text = str(cache_dir)
+
+    for d in font_dirs:
+        dir_elem = ET.SubElement(root, "dir")
+        dir_elem.text = d
+
+    # Merge the system fontconfig if it exists alongside Poppler.
+    # The Poppler winget/choco installs bundle fontconfig in <poppler>/Library/etc/fonts.
+    if poppler_tool:
+        tool_dir = Path(poppler_tool).resolve().parent
+        for share_dir in (
+            tool_dir.parent / "etc" / "fonts",
+            tool_dir.parent.parent / "Library" / "etc" / "fonts",
+        ):
+            bundled_conf = share_dir / "fonts.conf"
+            if bundled_conf.is_file():
+                include_elem = ET.SubElement(root, "include")
+                include_elem.text = str(bundled_conf)
+                break
+
+    preferred_fonts = [
+        "Noto Sans SC",
+        "Microsoft YaHei",
+        "SimSun",
+        "SimHei",
+        "DengXian",
+        "KaiTi",
+        "FangSong",
+    ]
+    aliases = [
+        "sans-serif",
+        "serif",
+        "monospace",
+        "STSong",
+        "STSong-Light",
+        "AdobeSongStd",
+        "AdobeSongStd-Light",
+        "AdobeHeitiStd",
+        "Songti SC",
+        "Heiti SC",
+        "SimSun",
+        "NSimSun",
+        "SimHei",
+        "Microsoft YaHei",
+        "DengXian",
+        "KaiTi",
+        "FangSong",
+    ]
+    for alias_name in aliases:
+        alias_elem = ET.SubElement(root, "alias")
+        family = ET.SubElement(alias_elem, "family")
+        family.text = alias_name
+        prefer = ET.SubElement(alias_elem, "prefer")
+        for font_name in preferred_fonts:
+            preferred = ET.SubElement(prefer, "family")
+            preferred.text = font_name
+
+    tree = ET.ElementTree(root)
+    ET.indent(tree, space="  ")
+    tree.write(fonts_conf, encoding="unicode", xml_declaration=True)
+
+    _fontconfig_env = {
+        "FONTCONFIG_PATH": str(fontconfig_dir),
+        "FONTCONFIG_FILE": str(fonts_conf),
+        "XDG_CACHE_HOME": str(fontconfig_dir),
+    }
+    os.environ.update(_fontconfig_env)
 
 
 class ConverterError(RuntimeError):
@@ -95,13 +220,18 @@ def require_tools() -> list[str]:
 
 
 def find_tool(name: str) -> str | None:
-    found = shutil.which(name)
-    if found:
-        return found
+    names = [name]
+    if platform.system() == "Windows" and not name.lower().endswith(".exe"):
+        names.append(f"{name}.exe")
     for folder in TOOL_SEARCH_DIRS:
-        candidate = Path(folder) / name
-        if candidate.exists() and os.access(candidate, os.X_OK):
-            return str(candidate)
+        for candidate_name in names:
+            candidate = Path(folder) / candidate_name
+            if candidate.exists() and os.access(candidate, os.X_OK):
+                return str(candidate)
+
+    found = shutil.which(name)
+    if found and "miktex" not in found.lower():
+        return found
     return None
 
 
@@ -109,7 +239,16 @@ def tool_path(name: str) -> str:
     found = find_tool(name)
     if not found:
         raise ConverterError(f"Required tool not found: {name}")
+    _configure_fontconfig_windows(found)
     return found
+
+
+def poppler_env() -> dict[str, str] | None:
+    if platform.system() != "Windows":
+        return None
+    env = os.environ.copy()
+    env.update(_fontconfig_env)
+    return env
 
 
 def natural_key(path: Path) -> list[object]:
@@ -141,6 +280,7 @@ def get_pdf_page_count(pdf_path: Path) -> int:
         text=True,
         encoding="utf-8",
         errors="replace",
+        env=poppler_env(),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
@@ -205,6 +345,7 @@ def render_pdf_page(pdf_path: Path, page: int, output_prefix: Path, dpi: int = 3
         text=True,
         encoding="utf-8",
         errors="replace",
+        env=poppler_env(),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
@@ -237,6 +378,7 @@ def render_pdf_page_preview(pdf_path: Path, page: int, output_prefix: Path, dpi:
         text=True,
         encoding="utf-8",
         errors="replace",
+        env=poppler_env(),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )

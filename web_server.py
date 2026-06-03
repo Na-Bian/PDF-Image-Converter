@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from http import HTTPStatus
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, unquote
 
 from converter import (
     ExportOptions,
@@ -83,6 +83,7 @@ def parse_multipart(content_type: str, body: bytes) -> list[tuple[str, str, byte
         headers = header_blob.decode("utf-8", errors="replace").split("\r\n")
         name = ""
         filename = ""
+        filename_star = ""
         for header in headers:
             if header.lower().startswith("content-disposition:"):
                 for chunk in header.split(";"):
@@ -90,11 +91,17 @@ def parse_multipart(content_type: str, body: bytes) -> list[tuple[str, str, byte
                     if key == "name":
                         name = value.strip('"')
                     elif key == "filename":
-                        filename = Path(value.strip('"')).name
+                        filename = value.strip('"')
+                    elif key == "filename*":
+                        # RFC 5987: charset'language'value_percent_encoded
+                        filename_star = value.strip("'").split("''", 1)[-1]
+        chosen = unquote(filename_star, encoding="utf-8") if filename_star else filename
+        if chosen:
+            chosen = Path(chosen).name
         if data.endswith(b"\r\n"):
             data = data[:-2]
-        if filename:
-            parts.append((name, filename, data))
+        if chosen:
+            parts.append((name, chosen, data))
     return parts
 
 
@@ -103,6 +110,10 @@ def zip_directory(source_dir: Path, zip_path: Path) -> None:
         for path in sorted(source_dir.rglob("*")):
             if path.is_file():
                 archive.write(path, path.relative_to(source_dir))
+        # Force UTF-8 flag on all entries so Chinese filenames survive extraction
+        # on any OS (CP437 is the default and corrupts non-ASCII names).
+        for info in archive.filelist:
+            info.flag_bits |= 0x800
 
 
 def poppler_install_plan() -> dict[str, object]:
