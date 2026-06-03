@@ -22,6 +22,14 @@ TOOL_SEARCH_DIRS = (
     "/bin",
 )
 
+# Windows: add common Poppler install locations
+if platform.system() == "Windows":
+    _local = Path(os.environ.get("LOCALAPPDATA", "")) / "Poppler"
+    _prog = Path(os.environ.get("PROGRAMFILES", "")) / "Poppler"
+    for _d in [_local, _prog]:
+        if _d.is_dir():
+            TOOL_SEARCH_DIRS = (*TOOL_SEARCH_DIRS, str(_d / "Library" / "bin"))
+
 
 class ConverterError(RuntimeError):
     pass

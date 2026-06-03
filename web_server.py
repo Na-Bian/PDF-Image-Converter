@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import threading
+import traceback
 import uuid
 import zipfile
 import argparse
@@ -311,6 +312,8 @@ class WebHandler(BaseHTTPRequestHandler):
             temp_dir = Path(session["dir"]) / "previews"
             temp_dir.mkdir(exist_ok=True)
 
+            print(f"[preview] file={pdf['name']} page={page} kind={kind} path={pdf['path']}")
+
             if kind == "thumb":
                 # Thumbnails: PNG at 34 DPI (small, need quality)
                 dpi = 34
@@ -341,6 +344,7 @@ class WebHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(data)
         except Exception as exc:
+            traceback.print_exc()
             self.send_json({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
 
     def handle_preview_batch(self, query: str) -> None:
