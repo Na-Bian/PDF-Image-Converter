@@ -90,6 +90,8 @@ const translations = {
     toolCheckInstallFail: "安装失败",
     toolCheckClose: "关闭",
     toolCheckRetry: "重新检查",
+    toolCheckRestarting: "安装完成，服务器正在重启以加载新工具…",
+    toolCheckRestartWait: "等待服务器重启…",
   },
   zht: {
     eyebrow: "本地 Web 工具",
@@ -162,6 +164,8 @@ const translations = {
     toolCheckInstallFail: "安裝失敗",
     toolCheckClose: "關閉",
     toolCheckRetry: "重新檢查",
+    toolCheckRestarting: "安裝完成，伺服器正在重啟以載入新工具…",
+    toolCheckRestartWait: "等待伺服器重啟…",
   },
   en: {
     eyebrow: "Local Web Tool",
@@ -233,6 +237,8 @@ const translations = {
     toolCheckInstallFail: "Install failed",
     toolCheckClose: "Close",
     toolCheckRetry: "Check again",
+    toolCheckRestarting: "Install complete. Server is restarting to load new tools…",
+    toolCheckRestartWait: "Waiting for server to restart…",
   },
 };
 
@@ -303,10 +309,23 @@ function showToolCheckModal(payload) {
     try {
       const response = await fetch("/api/tools/install", { method: "POST" });
       const result = await response.json();
-      overlay.remove();
-      if (!response.ok || result.error || !result.ok) {
-        showToolCheckModal({ missingTools: result.missingTools, installer: result.plan });
+      if (result.needsRestart) {
+        const box = overlay.querySelector(".modal-box");
+        box.innerHTML = `
+          <div class="modal-icon modal-icon-ok">✓</div>
+          <h3 class="modal-title">${t("toolCheckRestarting")}</h3>
+          <p class="modal-desc">${t("toolCheckRestartWait")}</p>
+        `;
+        for (let i = 0; i < 60; i++) {
+          await new Promise((r) => setTimeout(r, 1000));
+          try {
+            const res = await fetch("/api/health", { signal: AbortSignal.timeout(2000) });
+            if (res.ok) { overlay.remove(); $("#healthButton").click(); return; }
+          } catch { /* server still restarting */ }
+        }
+        overlay.remove();
       } else {
+        overlay.remove();
         showToolCheckModal({ missingTools: result.missingTools, installer: result.plan });
       }
     } catch {

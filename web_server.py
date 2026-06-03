@@ -6,8 +6,10 @@ import os
 import platform
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
+import time
 import traceback
 import uuid
 import zipfile
@@ -160,6 +162,13 @@ def poppler_install_plan() -> dict[str, object]:
     }
 
 
+def restart_server() -> None:
+    """Restart the server process to pick up new PATH entries (e.g. after installing Poppler)."""
+    time.sleep(1)  # allow the HTTP response to flush
+    print("[server] Restarting to pick up newly installed tools...")
+    os.execv(sys.executable, [sys.executable] + sys.argv)
+
+
 def run_poppler_install() -> dict[str, object]:
     plan = poppler_install_plan()
     if not plan["available"]:
@@ -173,11 +182,16 @@ def run_poppler_install() -> dict[str, object]:
             stderr=subprocess.STDOUT,
             timeout=900,
         )
+    missing = require_tools()
+    if result.returncode == 0 and missing:
+        # Install succeeded but tools are not visible yet — restart to refresh PATH.
+        threading.Thread(target=restart_server, daemon=True).start()
     return {
         "ok": result.returncode == 0,
         "returnCode": result.returncode,
         "output": result.stdout[-6000:],
-        "missingTools": require_tools(),
+        "missingTools": missing,
+        "needsRestart": result.returncode == 0 and bool(missing),
         "plan": plan,
     }
 
