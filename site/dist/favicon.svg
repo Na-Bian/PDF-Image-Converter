@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">PDF Image Converter</title>
+  <desc id="desc">A green document icon with an image mark</desc>
+  <rect width="64" height="64" rx="14" fill="#0b8b70"/>
+  <path d="M19 10h18l10 10v34H19a5 5 0 0 1-5-5V15a5 5 0 0 1 5-5Z" fill="#fff"/>
+  <path d="M37 10v12h12" fill="#d9f4eb"/>
+  <path d="M37 10v12h12" fill="none" stroke="#0b8b70" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="26" cy="32" r="4" fill="#0b8b70"/>
+  <path d="m20 48 9-10 6 6 5-6 7 10H20Z" fill="#0b8b70"/>
+</svg>
