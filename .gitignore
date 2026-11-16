@@ -5,3 +5,5 @@ build/
 *.egg-info/
 dist/
 .env
+site/.git/
+site/site-deploy.tar.gz
