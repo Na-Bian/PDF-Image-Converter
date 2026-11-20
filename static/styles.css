@@ -917,7 +917,7 @@ input[type="number"]:focus {
 /* ─── Footer ─────────────────────────────────────── */
 .app-footer {
   text-align: center;
-  padding: 28px 0 2px;
+  padding: 8px 0 2px;
   color: var(--muted-soft);
   font-size: 12px;
   letter-spacing: 0.02em;
@@ -1017,6 +1017,7 @@ input[type="number"]:focus {
   body { overflow: auto; }
 
   .app-shell { height: auto; }
+  .app-footer { padding-top: 28px; }
 
   .workspace {
     grid-template-columns: 1fr;
