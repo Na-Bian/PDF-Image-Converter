@@ -881,6 +881,7 @@ input[type="number"]:focus {
   display: flex;
   align-items: center;
   gap: 5px;
+  white-space: nowrap;
 }
 
 #healthButton .ui-icon {
@@ -933,7 +934,7 @@ input[type="number"]:focus {
 /* ─── Footer ─────────────────────────────────────── */
 .app-footer {
   text-align: center;
-  padding: 10px 0 8px;
+  padding: 16px 0 2px;
   color: var(--muted-soft);
   font-size: 12px;
   letter-spacing: 0.02em;
@@ -1044,5 +1045,28 @@ input[type="number"]:focus {
   .preview-grid {
     height: 640px;
     min-height: 500px;
+  }
+}
+
+@media (max-width: 600px) {
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .topbar h1 {
+    font-size: clamp(22px, 6.5vw, 26px);
+  }
+
+  .top-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  #languageSelect,
+  #healthButton {
+    min-height: 44px;
+    font-size: 14px;
   }
 }
