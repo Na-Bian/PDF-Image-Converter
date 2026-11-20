@@ -52,7 +52,7 @@ button, input, select { font: inherit; }
   width: min(1480px, calc(100vw - 32px));
   height: 100vh;
   margin: 0 auto;
-  padding: 20px 0;
+  padding: 20px 0 8px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
@@ -917,7 +917,7 @@ input[type="number"]:focus {
 /* ─── Footer ─────────────────────────────────────── */
 .app-footer {
   text-align: center;
-  padding: 16px 0 2px;
+  padding: 28px 0 2px;
   color: var(--muted-soft);
   font-size: 12px;
   letter-spacing: 0.02em;
